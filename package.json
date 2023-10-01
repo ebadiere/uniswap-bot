@@ -1,0 +1,25 @@
+{
+  "name": "uniswap-bot",
+  "version": "0.0.1",
+  "description": "Bot for uniswap forked exchanges.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^3.0.0",
+    "hardhat": "^2.17.4"
+  },
+  "dependencies": {
+    "@hashgraph/sdk": "^2.34.1",
+    "@openzeppelin/contracts": "^4.9.3",
+    "@uniswap/v2-periphery": "^1.1.0-beta.0",
+    "big.js": "^6.2.1",
+    "bignumber.ts": "^1.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2"
+  }
+}
