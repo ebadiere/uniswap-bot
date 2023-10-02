@@ -1,62 +1,69 @@
-// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
-
-interface IERC20 {
-    function transfer(address recipient, uint256 amount) external returns (bool);
-    function approve(address spender, uint256 amount) external returns (bool);
-    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
-    function balanceOf(address account) external view returns (uint256);
-}
-
-interface IUniswapV2Pair {
-    function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external;
-}
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract FlashSwap {
-    address private owner;
-    address private uniswapV2Pair;
-    address private uniswapV2Router;
-    address private token0;
-    address private token1;
+    address public owner;
+    address uniswapRouterAddress;
 
-    constructor(address _uniswapV2Pair, address _uniswapV2Router, address _token0, address _token1) {
+    constructor(address _uniswapRouterAddress) {
         owner = msg.sender;
-        uniswapV2Pair = _uniswapV2Pair;
-        uniswapV2Router = _uniswapV2Router;
-        token0 = _token0;
-        token1 = _token1;
+        uniswapRouterAddress = _uniswapRouterAddress;
     }
 
     modifier onlyOwner() {
-        require(msg.sender == owner, "Not the contract owner");
+        require(msg.sender == owner, "Only the owner can execute this");
         _;
     }
 
-    function startFlashSwap(uint256 amount0Out, uint256 amount1Out) external onlyOwner {
-        bytes memory data = abi.encode(msg.sender);
-        IUniswapV2Pair(uniswapV2Pair).swap(amount0Out, amount1Out, address(this), data);
-    }
+    // Perform the flash swap
+    function flashSwap(address tokenToBorrow, address tokenToCollateral) external onlyOwner {
+        // Initialize Uniswap Router
+        IUniswapV2Router02 router = IUniswapV2Router02(uniswapRouterAddress);
 
-    function uniswapV2Call(address sender, uint256 amount0, uint256 amount1, bytes calldata data) external {
-        require(msg.sender == uniswapV2Pair, "Only callable by the Uniswap V2 Pair");
+        // Get token balances before the swap
+        uint256 balanceBeforeBorrow = IERC20(tokenToBorrow).balanceOf(address(this));
+        uint256 balanceBeforeCollateral = IERC20(tokenToCollateral).balanceOf(address(this));
 
-        address payable user = payable(abi.decode(data, (address)));
-        
-        // Logic for the flash swap
-        // For example, arbitrage between two tokens or any other logic
+        // Define the amount to borrow (dynamic)
+        uint256 amountToBorrow = balanceBeforeCollateral / 2; // For example, borrow half of the collateral
 
-        // Repay the flash loan
-        if (amount0 > 0) {
-            IERC20(token0).transfer(uniswapV2Pair, amount0);
-        } else {
-            IERC20(token1).transfer(uniswapV2Pair, amount1);
-        }
-    }
+        // Execute the flash swap
+        // Swap the amountToBorrow of tokenToCollateral for tokenToBorrow
+        address[] memory path = new address[](2);
+        path[0] = tokenToCollateral;
+        path[1] = tokenToBorrow;
 
-    // In case you want to withdraw tokens from the contract
-    function withdrawTokens(address token, uint256 amount) external onlyOwner {
-        IERC20(token).transfer(msg.sender, amount);
+        router.swapExactTokensForTokens(
+            amountToBorrow,
+            0,
+            path,
+            address(this),
+            block.timestamp
+        );
+
+        // Perform your desired actions with the borrowed token here
+        // ...
+
+        // Return the borrowed tokens (plus fees) to the Uniswap pool
+        uint256 balanceAfterBorrow = IERC20(tokenToBorrow).balanceOf(address(this));
+        uint256 repayAmount = balanceAfterBorrow + 1; // Ensure we repay more than borrowed
+        IERC20(tokenToBorrow).approve(address(router), repayAmount);
+
+        // Swap the tokenToBorrow back to tokenToCollateral and repay
+        path[0] = tokenToBorrow;
+        path[1] = tokenToCollateral;
+
+        router.swapExactTokensForTokens(
+            repayAmount,
+            0,
+            path,
+            address(this),
+            block.timestamp
+        );
+
+        // Perform any additional actions with the remaining tokenToCollateral here
+        // ...
     }
 }
