@@ -1,15 +1,16 @@
 import { ethers } from 'ethers';
 
-import config from './config.json';
+import config from '../config.json';
 import { getTokenAndContract, getPairContract, getReserves, calculatePrice, simulate } from './helpers/helpers';
 import { provider, uFactory, uRouter, sFactory, sRouter, arbitrage } from './helpers/initialization';
+import { any } from 'hardhat/internal/core/params/argumentTypes';
 
-const arbFor: string = process.env.ARB_FOR; 
-const arbAgainst: string = process.env.ARB_AGAINST;
-const units: string = process.env.UNITS;
-const difference: string = process.env.PRICE_DIFFERENCE;
-const gasLimit: string = process.env.GAS_LIMIT;
-const gasPrice: string = process.env.GAS_PRICE;
+const arbFor: string | undefined = process.env.ARB_FOR; 
+const arbAgainst: string | undefined = process.env.ARB_AGAINST;
+const units: string | undefined = process.env.UNITS;
+const difference: string | undefined = process.env.PRICE_DIFFERENCE;
+const gasLimit: string | undefined = process.env.GAS_LIMIT;
+const gasPrice: string | undefined = process.env.GAS_PRICE;
 
 let uPair: any, sPair: any, amount: any;
 let isExecuting: boolean = false;

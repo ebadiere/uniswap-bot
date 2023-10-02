@@ -14,7 +14,7 @@ contract UniswapV2FlashSwap is IUniswapV2Callee {
     address private constant UNISWAP_V2_FACTORY =
         0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
 
-    address private constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+    address private constant SHIB = 0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE;
     address private constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
     IUniswapV2Factory private constant factory = IUniswapV2Factory(UNISWAP_V2_FACTORY);
@@ -27,7 +27,7 @@ contract UniswapV2FlashSwap is IUniswapV2Callee {
     uint public amountToRepay;
 
     constructor() {
-        pair = IUniswapV2Pair(factory.getPair(DAI, WETH));
+        pair = IUniswapV2Pair(factory.getPair(SHIB, WETH));
     }
 
     function flashSwap(uint wethAmount) external {

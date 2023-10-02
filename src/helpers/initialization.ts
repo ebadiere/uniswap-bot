@@ -1,7 +1,7 @@
 import { ethers } from 'hardhat';
 import dotenv from 'dotenv';
 
-import config from '../config.json';
+import config from '../../config.json';
 import IUniswapV2Router02 from '@uniswap/v2-periphery/build/IUniswapV2Router02.json';
 import IUniswapV2Factory from '@uniswap/v2-core/build/IUniswapV2Factory.json';
 
