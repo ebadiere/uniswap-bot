@@ -3,9 +3,6 @@
   "version": "0.0.1",
   "description": "Bot for uniswap forked exchanges.",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "author": "",
   "license": "ISC",
   "devDependencies": {
@@ -21,5 +18,9 @@
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "express": "^4.18.2"
+  },
+  "scripts": {
+    "account-alias": "node ./scripts/account-alias-ecdsa.js",
+    "deploy": "npx hardhat run ./scripts/deploy.js"
   }
 }

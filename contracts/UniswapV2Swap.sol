@@ -2,6 +2,7 @@
 pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 
 
 contract UniswapV2Swap {
