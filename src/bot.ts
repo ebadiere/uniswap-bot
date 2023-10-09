@@ -5,8 +5,8 @@ import { getTokenAndContract, getPairContract, getReserves, calculatePrice, simu
 import { provider, uFactory, uRouter, sFactory, sRouter, arbitrage } from './helpers/initialization';
 import { any } from 'hardhat/internal/core/params/argumentTypes';
 
-const arbFor: string | undefined = process.env.ARB_FOR; 
-const arbAgainst: string | undefined = process.env.ARB_AGAINST;
+const arbFor: string = process.env.ARB_FOR || '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'; 
+const arbAgainst: string = process.env.ARB_AGAINST || '0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE';
 const units: string | undefined = process.env.UNITS;
 const difference: string | undefined = process.env.PRICE_DIFFERENCE;
 const gasLimit: string | undefined = process.env.GAS_LIMIT;

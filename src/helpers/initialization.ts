@@ -4,16 +4,29 @@ import dotenv from 'dotenv';
 import config from '../../config.json';
 import IUniswapV2Router02 from '@uniswap/v2-periphery/build/IUniswapV2Router02.json';
 import IUniswapV2Factory from '@uniswap/v2-core/build/IUniswapV2Factory.json';
+import { Provider } from 'ethers';
 
 dotenv.config();
 
-let provider;
+// let provider: Provider
 
-if (config.PROJECT_SETTINGS.isLocal) {
-  provider = new ethers.providers.WebSocketProvider(`ws://127.0.0.1:8545/`);
-} else {
-  provider = new ethers.providers.WebSocketProvider(`wss://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`);
+async function initialize() {
+
+  // if (config.PROJECT_SETTINGS.isLocal) {
+    // new ethers.WebSocketProvider()
+    // if (config.PROJECT_SETTINGS.isLocal) {
+    //   provider = new ethers.providers.WebSocketProvider(`ws://127.0.0.1:8545/`);
+    // } else {
+    //   provider = new ethers.providers.WebSocketProvider(`${process.env.ALCHEMY_API_KEY}`);
+    // }
+    const [owner] = await ethers.getSigners();
+    return owner.provider;
+  // }
+  
 }
+
+const provider: any | undefined = initialize();
+
 
 // -- SETUP UNISWAP/SUSHISWAP CONTRACTS -- //
 const uFactory = new ethers.Contract(config.UNISWAP.FACTORY_ADDRESS, IUniswapV2Factory.abi, provider);
