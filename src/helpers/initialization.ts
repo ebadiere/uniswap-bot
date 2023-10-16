@@ -1,47 +1,78 @@
-import { ethers } from 'hardhat';
-import dotenv from 'dotenv';
+import { ethers, Contract, providers } from "ethers";
+import Big from 'big.js';
 
-import config from '../../config.json';
-import IUniswapV2Router02 from '@uniswap/v2-periphery/build/IUniswapV2Router02.json';
-import IUniswapV2Factory from '@uniswap/v2-core/build/IUniswapV2Factory.json';
-import { Provider } from 'ethers';
+import IUniswapV2Pair from "@uniswap/v2-core/build/IUniswapV2Pair.json";
+import IERC20 from '@openzeppelin/contracts/build/contracts/ERC20.json';
 
-dotenv.config();
-
-// let provider: Provider
-
-async function initialize() {
-
-  // if (config.PROJECT_SETTINGS.isLocal) {
-    // new ethers.WebSocketProvider()
-    // if (config.PROJECT_SETTINGS.isLocal) {
-    //   provider = new ethers.providers.WebSocketProvider(`ws://127.0.0.1:8545/`);
-    // } else {
-    //   provider = new ethers.providers.WebSocketProvider(`${process.env.ALCHEMY_API_KEY}`);
-    // }
-    const [owner] = await ethers.getSigners();
-    return owner.provider;
-  // }
-  
+interface Token {
+    address: string;
+    decimals: number;
+    symbol: string;
+    name: string;
 }
 
-const provider: any | undefined = initialize();
+async function getTokenAndContract(_token0Address: string, _token1Address: string, _provider: providers.Provider): Promise<{ token0Contract: Contract, token1Contract: Contract, token0: Token, token1: Token }> {
+    const token0Contract = new ethers.Contract(_token0Address, IERC20.abi, _provider);
+    const token1Contract = new ethers.Contract(_token1Address, IERC20.abi, _provider);
 
+    const token0: Token = {
+        address: _token0Address,
+        decimals: 18,
+        symbol: await token0Contract.symbol(),
+        name: await token0Contract.name()
+    };
 
-// -- SETUP UNISWAP/SUSHISWAP CONTRACTS -- //
-const uFactory = new ethers.Contract(config.UNISWAP.FACTORY_ADDRESS, IUniswapV2Factory.abi, provider);
-const uRouter = new ethers.Contract(config.UNISWAP.V2_ROUTER_02_ADDRESS, IUniswapV2Router02.abi, provider);
-const sFactory = new ethers.Contract(config.SUSHISWAP.FACTORY_ADDRESS, IUniswapV2Factory.abi, provider);
-const sRouter = new ethers.Contract(config.SUSHISWAP.V2_ROUTER_02_ADDRESS, IUniswapV2Router02.abi, provider);
+    const token1: Token = {
+        address: _token1Address,
+        decimals: 18,
+        symbol: await token1Contract.symbol(),
+        name: await token1Contract.name()
+    };
 
-const IArbitrage = require('../artifacts/contracts/Arbitrage.sol/Arbitrage.json');
-const arbitrage = new ethers.Contract(config.PROJECT_SETTINGS.ARBITRAGE_ADDRESS, IArbitrage.abi, provider);
+    return { token0Contract, token1Contract, token0, token1 };
+}
+
+async function getPairAddress(_V2Factory: Contract, _token0: string, _token1: string): Promise<string> {
+    const pairAddress = await _V2Factory.getPair(_token0, _token1);
+    return pairAddress;
+}
+
+async function getPairContract(_V2Factory: Contract, _token0: string, _token1: string, _provider: providers.Provider): Promise<Contract> {
+    const pairAddress = await getPairAddress(_V2Factory, _token0, _token1);
+    const pairContract = new ethers.Contract(pairAddress, IUniswapV2Pair.abi, _provider);
+    return pairContract;
+}
+
+async function getReserves(_pairContract: Contract): Promise<[Big, Big]> {
+    const reserves = await _pairContract.getReserves();
+    return [Big(reserves.reserve0), Big(reserves.reserve1)];
+}
+
+async function calculatePrice(_pairContract: Contract): Promise<Big> {
+    const [x, y] = await getReserves(_pairContract);
+    return x.div(y);
+}
+
+async function calculateDifference(_uPrice: number, _sPrice: number): Promise<string> {
+    return (((_uPrice - _sPrice) / _sPrice) * 100).toFixed(2);
+}
+
+async function simulate(amount: number, _routerPath: Contract[], _token0: Token, _token1: Token): Promise<{ amountIn: number, amountOut: number }> {
+    const trade1 = await _routerPath[0].getAmountsOut(amount, [_token0.address, _token1.address]);
+    const trade2 = await _routerPath[1].getAmountsOut(trade1[1], [_token1.address, _token0.address]);
+
+    const amountIn = Number(ethers.utils.formatUnits(trade1[0], 'ether'));
+    const amountOut = Number(ethers.utils.formatUnits(trade2[1], 'ether'));
+
+    return { amountIn, amountOut };
+}
 
 export {
-  provider,
-  uFactory,
-  uRouter,
-  sFactory,
-  sRouter,
-  arbitrage
+    getTokenAndContract,
+    getPairAddress,
+    getPairContract,
+    getReserves,
+    calculatePrice,
+    calculateDifference,
+    simulate
 };

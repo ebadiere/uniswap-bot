@@ -43,7 +43,7 @@ describe("SWAPTEST", function () {
   it("should swap WETH for Shiba", async function () {
 
     // Check the current allowance for tokenIn
-    const tokenIn = await ethers.getContractAt('IERC20', WETH_ADDRESS);
+    const tokenIn = await ethers.getContractAt('contracts/UniswapV2FlashSwap.sol:IERC20', WETH_ADDRESS);
     const allowance = await tokenIn.allowance(signer.address, UNISWAP_V2_ROUTER_02_ADDRESS);
 
     // If the allowance is less than the amountIn, approve the Router to spend tokenIn

@@ -2,12 +2,12 @@ import hre from "hardhat";
 import dotenv from "dotenv";
 
 // -- IMPORT HELPER FUNCTIONS & CONFIG -- //
-import { getTokenAndContract, getPairContract, calculatePrice } from "./helpers/helpers";
-import { provider, uFactory, uRouter, sFactory, sRouter } from "./helpers/initialization";
+import { getTokenAndContract, getPairContract, calculatePrice } from "../helpers/helpers";
+import { provider, uFactory, uRouter, sFactory, sRouter } from "../helpers/initialization.js";
 
 // -- CONFIGURE VALUES HERE -- //
-const V2_FACTORY_TO_USE: any = uFactory.address;
-const V2_ROUTER_TO_USE: any = uRouter;
+const V2_FACTORY_TO_USE: string = uFactory;
+const V2_ROUTER_TO_USE: string = uRouter;
 
 const UNLOCKED_ACCOUNT: string = '0xdEAD000000000000000042069420694206942069'; // SHIB account to impersonate 
 const AMOUNT: string = '40500000000000'; // 40,500,000,000,000 SHIB -- Tokens will automatically be converted to wei
@@ -19,7 +19,7 @@ async function main(): Promise<void> {
     token1Contract,
     token0: ARB_AGAINST,
     token1: ARB_FOR
-  } = await getTokenAndContract(process.env.ARB_AGAINST || '0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE', process.env.ARB_FOR || '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', provider);
+  } = await getTokenAndContract(process.env.ARB_AGAINST, process.env.ARB_FOR, provider);
 
   const pair = await getPairContract(V2_FACTORY_TO_USE, ARB_AGAINST.address, ARB_FOR.address, provider);
 
@@ -45,7 +45,7 @@ async function manipulatePrice(_path: any[], _token0Contract: any): Promise<void
   console.log(`Input Token: ${_path[0].symbol}`);
   console.log(`Output Token: ${_path[1].symbol}\n`);
 
-  const amount = hre.ethers.parseUnits(AMOUNT, 'ether');
+  const amount = hre.ethers.utils.parseUnits(AMOUNT, 'ether');
   const path = [_path[0].address, _path[1].address];
   const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes
 
