@@ -2,8 +2,8 @@ import hre from "hardhat";
 import dotenv from "dotenv";
 
 // -- IMPORT HELPER FUNCTIONS & CONFIG -- //
-import { getTokenAndContract, getPairContract, calculatePrice } from "../helpers/helpers";
-import { provider, uFactory, uRouter, sFactory, sRouter } from "../helpers/initialization.js";
+import { getTokenAndContract, getPairContract, calculatePrice } from "./helpers/helpers";
+import { provider, uFactory, uRouter, sFactory, sRouter } from "./helpers/initialization";
 
 // -- CONFIGURE VALUES HERE -- //
 const V2_FACTORY_TO_USE: string = uFactory;

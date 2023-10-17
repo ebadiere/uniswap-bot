@@ -33,7 +33,7 @@
           "run",
           "--network",
           "localhost",
-          "scripts/deploy.ts"
+          "src/manipulate.ts"
         ],
         "console": "integratedTerminal",
         "internalConsoleOptions": "neverOpen",
