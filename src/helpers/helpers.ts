@@ -12,21 +12,28 @@ interface Token {
 }
 
 async function getTokenAndContract(_token0Address: string, _token1Address: string, _provider: ethers.providers.Provider) {
+
     const token0Contract = new ethers.Contract(_token0Address, IERC20.abi, _provider);
     const token1Contract = new ethers.Contract(_token1Address, IERC20.abi, _provider);
 
-    const token0: Token = {
+    const token0Symbol = await token0Contract.symbol();
+    const token0Name = await token0Contract.name();
+
+    const token0: any = {
         address: _token0Address,
         decimals: 18,
-        symbol: await token0Contract.symbol(),
-        name: await token0Contract.name()
+        symbol: token0Symbol,
+        name: token0Name
     };
 
-    const token1: Token = {
+    const token1Symbol = await token1Contract.symbol();
+    const token1Name = await token1Contract.name();
+
+    const token1: any = {
         address: _token1Address,
         decimals: 18,
-        symbol: await token1Contract.symbol(),
-        name: await token1Contract.name()
+        symbol: token1Symbol,
+        name: token1Name
     };
 
     return { token0Contract, token1Contract, token0, token1 };

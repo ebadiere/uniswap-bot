@@ -10,9 +10,9 @@ dotenv.config();
 let provider;
 
 if (config.PROJECT_SETTINGS.isLocal) {
-  provider = new ethers.WebSocketProvider(`ws://127.0.0.1:8545/`);
+  provider = new ethers.providers.WebSocketProvider(`ws://127.0.0.1:8545/`);
 } else {
-  provider = new ethers.WebSocketProvider(`wss://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`);
+  provider = new ethers.providers.WebSocketProvider(`wss://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`);
 }
 
 // -- SETUP UNISWAP/SUSHISWAP CONTRACTS -- //
