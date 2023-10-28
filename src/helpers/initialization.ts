@@ -1,4 +1,5 @@
 import { ethers } from 'hardhat';
+import { Provider } from "@ethersproject/providers";
 import dotenv from 'dotenv';
 
 import config from '../../config.json';
@@ -7,7 +8,7 @@ import IUniswapV2Factory from '@uniswap/v2-core/build/IUniswapV2Factory.json';
 
 dotenv.config();
 
-let provider;
+let provider: Provider;
 
 if (config.PROJECT_SETTINGS.isLocal) {
   provider = new ethers.providers.WebSocketProvider(`ws://127.0.0.1:8545/`);

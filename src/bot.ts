@@ -1,15 +1,15 @@
 import { ethers } from 'ethers';
 
-import config from './config.json';
+import config from '../config.json';
 import { getTokenAndContract, getPairContract, getReserves, calculatePrice, simulate } from './helpers/helpers';
 import { provider, uFactory, uRouter, sFactory, sRouter, arbitrage } from './helpers/initialization';
 
-const arbFor: string = process.env.ARB_FOR; 
-const arbAgainst: string = process.env.ARB_AGAINST;
-const units: string = process.env.UNITS;
-const difference: string = process.env.PRICE_DIFFERENCE;
-const gasLimit: string = process.env.GAS_LIMIT;
-const gasPrice: string = process.env.GAS_PRICE;
+const arbFor: string = process.env.ARB_FOR || '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'; 
+const arbAgainst: string = process.env.ARB_AGAINST || '0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE';
+const units: number = parseInt(process.env.UNITS || '0');
+const difference: number = parseFloat(process.env.PRICE_DIFFERENCE || '0.5');
+const gasLimit: number = parseInt(process.env.GAS_LIMIT || '600000');
+const gasPrice: number = parseFloat(process.env.GAS_PRICE || '0.00000006');
 
 let uPair: any, sPair: any, amount: any;
 let isExecuting: boolean = false;
@@ -26,7 +26,7 @@ const main = async (): Promise<void> => {
     if (!isExecuting) {
       isExecuting = true;
 
-      const priceDifference: string = await checkPrice('Uniswap', token0, token1);
+      const priceDifference: number = await checkPrice('Uniswap', token0, token1);
       const routerPath: any = await determineDirection(priceDifference);
 
       if (!routerPath) {
@@ -55,7 +55,7 @@ const main = async (): Promise<void> => {
     if (!isExecuting) {
       isExecuting = true;
 
-      const priceDifference: string = await checkPrice('Sushiswap', token0, token1);
+      const priceDifference: number = await checkPrice('Sushiswap', token0, token1);
       const routerPath: any = await determineDirection(priceDifference);
 
       if (!routerPath) {
@@ -83,19 +83,19 @@ const main = async (): Promise<void> => {
   console.log("Waiting for swap event...");
 };
 
-const checkPrice = async (exchange: string, token0: any, token1: any): Promise<string> => {
+const checkPrice = async (exchange: string, token0: any, token1: any): Promise<number> => {
   isExecuting = true;
 
   console.log(`Swap Initiated on ${exchange}, Checking Price...\n`);
 
   const currentBlock: number = await provider.getBlockNumber();
 
-  const uPrice: number = await calculatePrice(uPair);
-  const sPrice: number = await calculatePrice(sPair);
+  const uPrice: Big = await calculatePrice(uPair);
+  const sPrice: Big = await calculatePrice(sPair);
 
-  const uFPrice: string = Number(uPrice).toFixed(units);
-  const sFPrice: string = Number(sPrice).toFixed(units);
-  const priceDifference: string = (((uFPrice - sFPrice) / sFPrice) * 100).toFixed(2);
+  const uFPrice: number = parseFloat(Number(uPrice).toFixed(units));
+  const sFPrice: number = parseFloat(Number(sPrice).toFixed(units));
+  const priceDifference: number = parseFloat((((uFPrice - sFPrice) / sFPrice) * 100).toFixed(2));
 
   console.log(`Current Block: ${currentBlock}`);
   console.log(`-----------------------------------------`);
@@ -106,7 +106,7 @@ const checkPrice = async (exchange: string, token0: any, token1: any): Promise<s
   return priceDifference;
 };
 
-const determineDirection = async (priceDifference: string): Promise<any> => {
+const determineDirection = async (priceDifference: number): Promise<any> => {
   console.log(`Determining Direction...\n`);
 
   if (priceDifference >= difference) {
@@ -163,26 +163,36 @@ const determineProfitability = async (_routerPath: any, _token0Contract: any, _t
     const amountDifference: number = amountOut - amountIn;
     const estimatedGasCost: number = gasLimit * gasPrice;
 
-    const account: any = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+    let account: any;
+    if (process.env.PRIVATE_KEY) {
+      account = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+    }
 
-    const ethBalanceBefore: string = ethers.utils.formatUnits(await account.getBalance(), 'ether');
-    const ethBalanceAfter: number = ethBalanceBefore - estimatedGasCost;
+    const ethBalanceBefore: string = account ? ethers.utils.formatUnits(await account.getBalance(), 'ether') : 'N/A';
+    const ethBalanceAfter: number | string = account ? Number(ethBalanceBefore) - estimatedGasCost : 'N/A';
 
-    const wethBalanceBefore: number = Number(ethers.utils.formatUnits(await _token0Contract.balanceOf(account.address), 'ether'));
+    const wethBalanceBefore: number = Number(ethers.utils.formatUnits(await _token0Contract.balanceOf(account?.address), 'ether'));
     const wethBalanceAfter: number = amountDifference + wethBalanceBefore;
     const wethBalanceDifference: number = wethBalanceAfter - wethBalanceBefore;
 
-    const data: any = {
-      'ETH Balance Before': ethBalanceBefore,
-      'ETH Balance After': ethBalanceAfter,
-      'ETH Spent (gas)': estimatedGasCost,
-      '-': {},
-      'WETH Balance BEFORE': wethBalanceBefore,
-      'WETH Balance AFTER': wethBalanceAfter,
-      'WETH Gained/Lost': wethBalanceDifference,
-      '-': {},
-      'Total Gained/Lost': wethBalanceDifference - estimatedGasCost
+    const data = {
+      eth: {
+          'ETH Balance Before': ethBalanceBefore,
+          'ETH Balance After': ethBalanceAfter,
+          'ETH Spent (gas)': estimatedGasCost
+      },
+      separator1: '-',
+      weth: {
+          'WETH Balance BEFORE': wethBalanceBefore,
+          'WETH Balance AFTER': wethBalanceAfter,
+          'WETH Gained/Lost': wethBalanceDifference
+      },
+      separator2: '-',
+      totals: {
+          'Total Gained/Lost': wethBalanceDifference - estimatedGasCost
+      }
     };
+  
 
     console.table(data);
     console.log();
@@ -213,10 +223,13 @@ const executeTrade = async (_routerPath: any, _token0Contract: any, _token1Contr
     startOnUniswap = false;
   }
 
-  const account: any = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+  let account: any;
+  if (process.env.PRIVATE_KEY) {
+    account = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+  }
 
-  const tokenBalanceBefore: any = await _token0Contract.balanceOf(account.address);
-  const ethBalanceBefore: any = await account.getBalance();
+  const tokenBalanceBefore: any = await _token0Contract.balanceOf(account?.address);
+  const ethBalanceBefore: any = account ? await account.getBalance() : 'N/A';
 
   if (config.PROJECT_SETTINGS.isDeployed) {
     const transaction: any = await arbitrage.connect(account).executeTrade(startOnUniswap, _token0Contract.address, _token1Contract.address, amount);
@@ -232,15 +245,21 @@ const executeTrade = async (_routerPath: any, _token0Contract: any, _token1Contr
   const ethBalanceDifference: any = ethBalanceBefore - ethBalanceAfter;
 
   const data: any = {
-    'ETH Balance Before': ethers.utils.formatUnits(ethBalanceBefore, 'ether'),
-    'ETH Balance After': ethers.utils.formatUnits(ethBalanceAfter, 'ether'),
-    'ETH Spent (gas)': ethers.utils.formatUnits(ethBalanceDifference.toString(), 'ether'),
-    '-': {},
-    'WETH Balance BEFORE': ethers.utils.formatUnits(tokenBalanceBefore, 'ether'),
-    'WETH Balance AFTER': ethers.utils.formatUnits(tokenBalanceAfter, 'ether'),
-    'WETH Gained/Lost': ethers.utils.formatUnits(tokenBalanceDifference.toString(), 'ether'),
-    '-': {},
-    'Total Gained/Lost': `${ethers.utils.formatUnits((tokenBalanceDifference - ethBalanceDifference).toString(), 'ether')} ETH`
+    eth: {
+      'ETH Balance Before': ethers.utils.formatUnits(ethBalanceBefore, 'ether'),
+      'ETH Balance After': ethers.utils.formatUnits(ethBalanceAfter, 'ether'),
+      'ETH Spent (gas)': ethers.utils.formatUnits(ethBalanceDifference.toString(), 'ether'),
+    },
+    separator1: '-',
+    weth: {
+      'WETH Balance BEFORE': ethers.utils.formatUnits(tokenBalanceBefore, 'ether'),
+      'WETH Balance AFTER': ethers.utils.formatUnits(tokenBalanceAfter, 'ether'),
+      'WETH Gained/Lost': ethers.utils.formatUnits(tokenBalanceDifference.toString(), 'ether'),
+    },
+    separator2: '-',
+    totals: {
+      'Total Gained/Lost': `${ethers.utils.formatUnits((tokenBalanceDifference - ethBalanceDifference).toString(), 'ether')} ETH`
+    }
   };
 
   console.table(data);

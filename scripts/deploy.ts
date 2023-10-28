@@ -2,12 +2,13 @@ import { ethers } from "hardhat";
 
 async function main() {
   
-  const uniswapV2FlashSwap = await ethers.deployContract("UniswapV2FlashSwap");
+  const UniswapV2FlashSwap = await ethers.getContractFactory("UniswapV2FlashSwap");
+  const uniswapV2FlashSwap = await UniswapV2FlashSwap.deploy();
 
-  await uniswapV2FlashSwap.waitForDeployment();
+  await uniswapV2FlashSwap.deployed();
 
   console.log(
-    ` deployed to ${uniswapV2FlashSwap.target}`
+    ` deployed to ${uniswapV2FlashSwap.address}`
   );
 }
 
