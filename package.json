@@ -23,8 +23,8 @@
     "express": "^4.18.2"
   },
   "scripts": {
-    "account-alias": "node ./scripts/account-alias-ecdsa.js",
-    "deploy": "npx hardhat run ./scripts/deploy.js",
+    "account-alias": "node ./scripts/account-alias-ecdsa.mjs",
+    "deploy": "npx hardhat run ./scripts/deploy.ts",
     "manipulate": "npx hardhat run ./src/manipulate.ts",
     "bot": "npx hardhat run ./src/bot.ts"
   }

@@ -232,7 +232,9 @@ const executeTrade = async (_routerPath: any, _token0Contract: any, _token1Contr
   const ethBalanceBefore: any = account ? await account.getBalance() : 'N/A';
 
   if (config.PROJECT_SETTINGS.isDeployed) {
-    const transaction: any = await arbitrage.connect(account).executeTrade(startOnUniswap, _token0Contract.address, _token1Contract.address, amount);
+    // const estimatedGasCost: any = await arbitrage.estimateGas.flashSwap(amount);
+    console.log(`DEBUG: Amount: ${amount}`);
+    const transaction: any = await arbitrage.connect(account).flashSwap(amount);
     const receipt: any = await transaction.wait();
   }
 
